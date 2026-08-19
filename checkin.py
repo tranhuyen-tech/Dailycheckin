@@ -32,12 +32,13 @@ def save_and_commit_time():
         print(f"⚠️ Không thể Git Commit: {e}")
 
 def do_unlucid_checkin():
+    # URL API chuẩn xác từ tên tiến trình claim_free_gems của bạn
     url = "https://unlucid.ai"  
     cookie = os.getenv("UNLUCID_COOKIE")
     
     headers = {
         "Cookie": cookie,
-        "Accept": "application/json, text/plain, */*",
+        "Accept": "*/*",
         "Content-Type": "application/json",
         "Referer": "https://unlucid.ai",
         "Origin": "https://unlucid.ai",
@@ -48,34 +49,26 @@ def do_unlucid_checkin():
         "X-Requested-With": "XMLHttpRequest"
     }
     
-    # --- THỬ NGHIỆM PHƯƠNG THỨC 1: LỆNH GET ---
-    print("Base64 📡 [Thử nghiệm 1] Đang gửi yêu cầu nhận Gem bằng phương thức GET...")
+    # Payload mặc định dạng đối tượng trống
+    payload_data = {} 
+    
+    print("📡 Đang gửi yêu cầu nhận Gem chính thức bằng phương thức POST...")
     try:
-        res_get = requests.get(url, headers=headers, impersonate="chrome", allow_redirects=False, timeout=20)
-        print(f"👉 Kết quả GET - Mã trạng thái: {res_get.status_code}")
+        response = requests.post(url, headers=headers, json=payload_data, impersonate="chrome", allow_redirects=False, timeout=30)
+        print(f"👉 Kết quả phản hồi từ Web - Mã trạng thái: {response.status_code}")
+        print(f"Nội dung phản hồi từ máy chủ: {response.text[:200]}")
         
-        # CHẤP NHẬN MÃ 200 CỦA LỆNH GET LÀM ĐIỂM DANH THÀNH CÔNG
-        if res_get.status_code == 200:
-            print(f"🎉 Nhận tín hiệu thành công từ cổng GET! Phản hồi: {res_get.text[:100]}")
+        # Chấp nhận mã thành công 200 từ lệnh POST hệ thống
+        if response.status_code == 200:
+            print("🎉 Điểm danh Unlucid AI thành công! Hệ thống đã ghi nhận.")
             save_and_commit_time()
             return True
+        else:
+            print("❌ Máy chủ từ chối lệnh POST. Có thể cần kiểm tra lại chuỗi chữ trong View source.")
+            return False
     except Exception as e:
-        print(f"💥 Lỗi khi thử lệnh GET: {e}")
-
-    # --- THỬ NGHIỆM PHƯƠNG THỨC 2: LỆNH POST ---
-    print("📡 [Thử nghiệm 2] Đang gửi yêu cầu nhận Gem bằng phương thức POST...")
-    try:
-        res_post = requests.post(url, headers=headers, json={}, impersonate="chrome", allow_redirects=False, timeout=20)
-        print(f"👉 Kết quả POST - Mã trạng thái: {res_post.status_code}")
-        if res_post.status_code == 200:
-            print(f"🎉 Thành công bằng lệnh POST! Phản hồi: {res_post.text[:100]}")
-            save_and_commit_time()
-            return True
-    except Exception as e:
-        print(f"💥 Lỗi khi thử lệnh POST: {e}")
-
-    print("❌ Các cổng kết nối đều không trả về mã 200 thành công.")
-    return False
+        print(f"💥 Lỗi kết nối gửi lệnh POST: {e}")
+        return False
 
 def main():
     last_time = get_last_checkin()
@@ -86,7 +79,7 @@ def main():
         print(f"⏳ Cảnh báo bảo vệ: Chưa đủ chu kỳ an toàn. Cần chờ thêm: {time_left}. Hủy lượt chạy ngầm!")
         return
 
-    print("🚀 Đã qua chu kỳ an toàn. Đang tiến hành quét tự động...")
+    print("🚀 Đã đủ thời gian an toàn. Tiến hành gửi lệnh điểm danh chính thức...")
     do_unlucid_checkin()
 
 if __name__ == "__main__":
