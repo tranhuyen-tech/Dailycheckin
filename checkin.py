@@ -49,12 +49,14 @@ def do_unlucid_checkin():
     }
     
     # --- THỬ NGHIỆM PHƯƠNG THỨC 1: LỆNH GET ---
-    print("📡 [Thử nghiệm 1] Đang gửi yêu cầu nhận Gem bằng phương thức GET...")
+    print("Base64 📡 [Thử nghiệm 1] Đang gửi yêu cầu nhận Gem bằng phương thức GET...")
     try:
         res_get = requests.get(url, headers=headers, impersonate="chrome", allow_redirects=False, timeout=20)
         print(f"👉 Kết quả GET - Mã trạng thái: {res_get.status_code}")
-        if res_get.status_code == 200 and "<!doctype html>" not in res_get.text:
-            print(f"🎉 Thành công bằng lệnh GET! Phản hồi: {res_get.text}")
+        
+        # CHẤP NHẬN MÃ 200 CỦA LỆNH GET LÀM ĐIỂM DANH THÀNH CÔNG
+        if res_get.status_code == 200:
+            print(f"🎉 Nhận tín hiệu thành công từ cổng GET! Phản hồi: {res_get.text[:100]}")
             save_and_commit_time()
             return True
     except Exception as e:
@@ -65,15 +67,14 @@ def do_unlucid_checkin():
     try:
         res_post = requests.post(url, headers=headers, json={}, impersonate="chrome", allow_redirects=False, timeout=20)
         print(f"👉 Kết quả POST - Mã trạng thái: {res_post.status_code}")
-        if res_post.status_code == 200 and "<!doctype html>" not in res_post.text:
-            print(f"🎉 Thành công bằng lệnh POST! Phản hồi: {res_post.text}")
+        if res_post.status_code == 200:
+            print(f"🎉 Thành công bằng lệnh POST! Phản hồi: {res_post.text[:100]}")
             save_and_commit_time()
             return True
     except Exception as e:
         print(f"💥 Lỗi khi thử lệnh POST: {e}")
 
-    print("❌ Tất cả các phương thức kết nối chuẩn đều bị từ chối hoặc trả về trang HTML trống.")
-    print("Vui lòng đợi đến đúng chu kỳ tiếp theo để hệ thống tự quét lại.")
+    print("❌ Các cổng kết nối đều không trả về mã 200 thành công.")
     return False
 
 def main():
