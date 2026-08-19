@@ -5,19 +5,20 @@ import subprocess
 from curl_cffi import requests
 
 LOG_FILE = "last_claim_success.txt"
-REQUIRED_DELAY = timedelta(hours=24, minutes=5)
+# Chu kỳ an toàn (24 giờ 15 phút) bù đắp sai số hệ thống
+REQUIRED_DELAY = timedelta(hours=24, minutes=15)
 
 def get_last_checkin():
     if os.path.exists(LOG_FILE):
         with open(LOG_FILE, "r") as f:
             try:
-                return datetime.fromisoformat(f.read().strip())
+                return datetime.strptime(f.read().strip(), "%d/%m/%Y %H:%M:%S")
             except:
                 return None
     return None
 
 def save_and_commit_time():
-    current_time = datetime.now().isoformat()
+    current_time = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
     with open(LOG_FILE, "w") as f:
         f.write(current_time)
     
@@ -25,40 +26,42 @@ def save_and_commit_time():
         subprocess.run(["git", "config", "--global", "user.name", "github-actions[bot]"], check=True)
         subprocess.run(["git", "config", "--global", "user.email", "github-actions[bot]@://github.com"], check=True)
         subprocess.run(["git", "add", LOG_FILE], check=True)
-        subprocess.run(["git", "commit", "-m", f"🔄 Update checkin history: {current_time}"], check=True)
+        subprocess.run(["git", "commit", "-m", f"🔄 Update checkin history: {current_time} (ICT)"], check=True)
         subprocess.run(["git", "push"], check=True)
-        print("💾 Đã lưu lịch sử và đồng bộ lên GitHub thành công.")
+        print(f"💾 Đã lưu lịch sử điểm danh lúc {current_time} về GitHub thành công.")
     except Exception as e:
         print(f"⚠️ Không thể Git Commit (Có thể dữ liệu không đổi): {e}")
 
 def do_unlucid_checkin():
-    # URL điểm cuối API xử lý yêu cầu claim
     url = "https://unlucid.ai"  
     cookie = os.getenv("UNLUCID_COOKIE")
     
     headers = {
         "Cookie": cookie,
         "Accept": "application/json, text/plain, */*",
+        "Content-Type": "application/json",
         "Referer": "https://unlucid.ai",
         "Origin": "https://unlucid.ai",
         "Accept-Language": "vi-VN,vi;q=0.9,en-US;q=0.8,en;q=0.7",
+        "Sec-Fetch-Dest": "empty",
+        "Sec-Fetch-Mode": "cors",
+        "Sec-Fetch-Site": "same-origin",
+        "X-Requested-With": "XMLHttpRequest"
     }
     
     try:
-        # ĐỔI THÀNH REQUESTS.GET: Chuyển đổi phương thức để khớp yêu cầu máy chủ và bypass lỗi 405
-        response = requests.get(url, headers=headers, impersonate="chrome", timeout=30)
-        print(f"📡 Trạng thái phản hồi từ Web: {response.status_code}")
-        print(f"Nội dung phản hồi từ hệ thống: {response.text}")
+        # Gửi lệnh POST bypass Cloudflare
+        response = requests.post(url, headers=headers, json={}, impersonate="chrome", allow_redirects=False, timeout=30)
+        print(f"📡 Trạng thái phản hồi thực tế từ Web: {response.status_code}")
         
-        if response.status_code == 200:
+        if response.status_code == 200 and "<!doctype html>" not in response.text:
+            print(f"Chi tiết phản hồi nhận quà: {response.text}")
             print("🎉 Điểm danh Unlucid AI thành công! Nhận 5 Gems.")
             save_and_commit_time()
             return True
-        elif response.status_code == 401:
-            print("❌ Cookie đã hết hạn hoặc sai thông tin. Vui lòng lấy lại Cookie mới.")
-            return False
         else:
-            print(f"❌ Điểm danh thất bại.")
+            print(f"❌ Web từ chối hoặc bắt xác thực lại (Mã: {response.status_code}).")
+            print("Vui lòng đợi đến đúng chu kỳ 24h15m để hệ thống tự quét lại.")
             return False
     except Exception as e:
         print(f"💥 Lỗi kết nối vượt tường lửa đến Unlucid AI: {e}")
@@ -70,10 +73,10 @@ def main():
     
     if last_time and (now - last_time) < REQUIRED_DELAY:
         time_left = REQUIRED_DELAY - (now - last_time)
-        print(f"⏳ Chưa đủ 24 giờ kể từ lần nhận trước. Cần chờ thêm: {time_left}. Hủy lượt này.")
+        print(f"⏳ Cảnh báo bảo vệ: Chưa đủ chu kỳ an toàn. Cần chờ thêm: {time_left}. Hủy lượt chạy ngầm!")
         return
 
-    print("🚀 Đã đủ chu kỳ thời gian. Đang gửi lệnh nhận Gem...")
+    print("🚀 Đã qua chu kỳ an toàn. Đang gửi lệnh nhận Gem...")
     do_unlucid_checkin()
 
 if __name__ == "__main__":
