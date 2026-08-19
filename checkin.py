@@ -45,7 +45,8 @@ def do_unlucid_checkin():
     }
     
     try:
-        response = requests.post(url, headers=headers, json={}, impersonate="safari_15_3", timeout=30)
+        # Đổi kiểu giả lập sang 'chrome' để tương thích hoàn toàn với hệ thống mới
+        response = requests.post(url, headers=headers, json={}, impersonate="chrome", timeout=30)
         print(f" Trạng thái phản hồi từ Web: {response.status_code}")
         
         if response.status_code == 200:
