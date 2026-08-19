@@ -1,0 +1,28 @@
+name: Unlucid AI Auto Gems
+
+on:
+  schedule:
+    - cron: '0 * * * *'
+  workflow_dispatch:
+
+jobs:
+  checkin-job:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Tải mã nguồn về máy ảo
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GH_PAT }}
+
+      - name: Cài đặt Python 3.10
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Cài đặt thư viện chuyên dụng chống Cloudflare
+        run: pip install curl_cffi
+
+      - name: Thực thi tiến trình kiểm tra và điểm danh
+        env:
+          UNLUCID_COOKIE: ${{ secrets.UNLUCID_COOKIE }}
+        run: python checkin.py
