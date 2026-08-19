@@ -5,7 +5,6 @@ import subprocess
 from curl_cffi import requests
 
 LOG_FILE = "last_claim_success.txt"
-# Chu kỳ an toàn (24 giờ 15 phút) bù đắp sai số hệ thống
 REQUIRED_DELAY = timedelta(hours=24, minutes=15)
 
 def get_last_checkin():
@@ -30,7 +29,7 @@ def save_and_commit_time():
         subprocess.run(["git", "push"], check=True)
         print(f"💾 Đã lưu lịch sử điểm danh lúc {current_time} về GitHub thành công.")
     except Exception as e:
-        print(f"⚠️ Không thể Git Commit (Có thể dữ liệu không đổi): {e}")
+        print(f"⚠️ Không thể Git Commit: {e}")
 
 def do_unlucid_checkin():
     url = "https://unlucid.ai"  
@@ -49,23 +48,33 @@ def do_unlucid_checkin():
         "X-Requested-With": "XMLHttpRequest"
     }
     
+    # --- THỬ NGHIỆM PHƯƠNG THỨC 1: LỆNH GET ---
+    print("📡 [Thử nghiệm 1] Đang gửi yêu cầu nhận Gem bằng phương thức GET...")
     try:
-        # Gửi lệnh POST bypass Cloudflare
-        response = requests.post(url, headers=headers, json={}, impersonate="chrome", allow_redirects=False, timeout=30)
-        print(f"📡 Trạng thái phản hồi thực tế từ Web: {response.status_code}")
-        
-        if response.status_code == 200 and "<!doctype html>" not in response.text:
-            print(f"Chi tiết phản hồi nhận quà: {response.text}")
-            print("🎉 Điểm danh Unlucid AI thành công! Nhận 5 Gems.")
+        res_get = requests.get(url, headers=headers, impersonate="chrome", allow_redirects=False, timeout=20)
+        print(f"👉 Kết quả GET - Mã trạng thái: {res_get.status_code}")
+        if res_get.status_code == 200 and "<!doctype html>" not in res_get.text:
+            print(f"🎉 Thành công bằng lệnh GET! Phản hồi: {res_get.text}")
             save_and_commit_time()
             return True
-        else:
-            print(f"❌ Web từ chối hoặc bắt xác thực lại (Mã: {response.status_code}).")
-            print("Vui lòng đợi đến đúng chu kỳ 24h15m để hệ thống tự quét lại.")
-            return False
     except Exception as e:
-        print(f"💥 Lỗi kết nối vượt tường lửa đến Unlucid AI: {e}")
-        return False
+        print(f"💥 Lỗi khi thử lệnh GET: {e}")
+
+    # --- THỬ NGHIỆM PHƯƠNG THỨC 2: LỆNH POST ---
+    print("📡 [Thử nghiệm 2] Đang gửi yêu cầu nhận Gem bằng phương thức POST...")
+    try:
+        res_post = requests.post(url, headers=headers, json={}, impersonate="chrome", allow_redirects=False, timeout=20)
+        print(f"👉 Kết quả POST - Mã trạng thái: {res_post.status_code}")
+        if res_post.status_code == 200 and "<!doctype html>" not in res_post.text:
+            print(f"🎉 Thành công bằng lệnh POST! Phản hồi: {res_post.text}")
+            save_and_commit_time()
+            return True
+    except Exception as e:
+        print(f"💥 Lỗi khi thử lệnh POST: {e}")
+
+    print("❌ Tất cả các phương thức kết nối chuẩn đều bị từ chối hoặc trả về trang HTML trống.")
+    print("Vui lòng đợi đến đúng chu kỳ tiếp theo để hệ thống tự quét lại.")
+    return False
 
 def main():
     last_time = get_last_checkin()
@@ -76,7 +85,7 @@ def main():
         print(f"⏳ Cảnh báo bảo vệ: Chưa đủ chu kỳ an toàn. Cần chờ thêm: {time_left}. Hủy lượt chạy ngầm!")
         return
 
-    print("🚀 Đã qua chu kỳ an toàn. Đang gửi lệnh nhận Gem...")
+    print("🚀 Đã qua chu kỳ an toàn. Đang tiến hành quét tự động...")
     do_unlucid_checkin()
 
 if __name__ == "__main__":
