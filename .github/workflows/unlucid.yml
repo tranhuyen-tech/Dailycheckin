@@ -5,7 +5,6 @@ on:
     - cron: '0 * * * *'
   workflow_dispatch:
 
-# Cấp quyền ghi trực tiếp cho script mà không cần mã Token PAT
 permissions:
   contents: write
 
@@ -22,7 +21,7 @@ jobs:
           python-version: '3.10'
 
       - name: Cài đặt thư viện chuyên dụng chống Cloudflare
-        run: pip install curl_cffi
+        run: pip install curl_cffi typing_extensions
 
       - name: Thực thi tiến trình kiểm tra và điểm danh
         env:
