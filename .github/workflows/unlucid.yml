@@ -2,6 +2,7 @@ name: Unlucid AI Auto Gems
 
 on:
   schedule:
+    # Tự động thức dậy kiểm tra mỗi tiếng một lần
     - cron: '0 * * * *'
   workflow_dispatch:
 
@@ -26,4 +27,5 @@ jobs:
       - name: Thực thi tiến trình kiểm tra và điểm danh
         env:
           UNLUCID_COOKIE: ${{ secrets.UNLUCID_COOKIE }}
+          TZ: Asia/Ho_Chi_Minh
         run: python checkin.py
