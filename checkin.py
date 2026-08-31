@@ -5,8 +5,8 @@ import time
 from curl_cffi import requests
 
 LOG_FILE = "last_claim_success.txt"
-# Đặt khoảng thời gian chờ cố định: 24 giờ + 5 phút
-REQUIRED_DELAY = timedelta(hours=24, minutes=5)
+# Đặt khoảng thời gian chờ cố định: 23 giờ + 50 phút
+REQUIRED_DELAY = timedelta(hours=23, minutes=50)
 
 
 def get_last_checkin():
