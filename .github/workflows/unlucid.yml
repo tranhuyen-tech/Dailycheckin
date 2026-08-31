@@ -3,7 +3,7 @@ name: Unlucid AI Auto Gems
 on:
   schedule:
     # Tự động thức dậy kiểm tra mỗi tiếng một lần
-    - cron: '0 * * * *'
+    - cron: '15,45 * * * *'
   workflow_dispatch:
 
 permissions:
