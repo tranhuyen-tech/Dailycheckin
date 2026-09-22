@@ -57,16 +57,17 @@ def save_and_commit_time():
 
 
 def do_unlucid_checkin():
-  # Endpoint API chính xác trích xuất từ cURL
-  url = "https://unlucid.ai/api/claim_free_gems"
+  # 1. Cập nhật URL mới chính xác trích xuất từ Form Action của SvelteKit
+  url = "https://unlucid.ai/gems?/claim"
 
   # Lấy cookie từ biến môi trường
   cookie = os.getenv("UNLUCID_COOKIE")
 
+  # 2. Cập nhật Headers phù hợp với phương thức POST Form mới
   headers = {
       "accept": "*/*",
       "accept-language": "vi,en-US;q=0.9,en;q=0.8",
-      "content-type": "application/json",
+      "content-type": "application/x-www-form-urlencoded",  # Đổi thành form do web đổi giao diện
       "origin": "https://unlucid.ai",
       "priority": "u=1, i",
       "referer": "https://unlucid.ai/gems",
@@ -85,14 +86,14 @@ def do_unlucid_checkin():
       "cookie": cookie,
   }
 
-  print(" Đang gửi yêu cầu nhận Gem tới /api/claim_free_gems...")
+  print(" Đang gửi yêu cầu nhận Gem tới /gems?/claim...")
 
   try:
-    # Gửi request POST với payload json rỗng {}
+    # 3. Gửi yêu cầu POST không kèm dữ liệu JSON (để trống body dạng chuỗi thô đúng với SvelteKit Payload)
     response = requests.post(
         url,
         headers=headers,
-        json={},
+        data="",  # Gửi body trống thay cho json={} cũ
         impersonate="chrome",
         timeout=30,
     )
